@@ -1,0 +1,39 @@
+version: '3.4'
+
+services:
+  musicloud-api:
+    container_name: musicloud-api
+    build:
+      dockerfile: Dockerfile
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - ./usr/src/app/node_modules
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@musicloud-sql:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public
+    # Run a command against the development stage of the image
+    command: npm run start:dev
+    ports:
+      - ${PORT}:${PORT}
+    depends_on:
+      - musicloud-sql
+  musicloud-sql:
+    container_name: musicloud-sql
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
+    volumes:
+      - musicloud-sql-data:/var/lib/postgresql/data
+    command: postgres -p ${POSTGRES_PORT}
+
+volumes:
+  musicloud-sql-data:
